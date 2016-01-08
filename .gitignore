@@ -55,3 +55,11 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Others
+.ipynb_checkpoints/
+*~
+venv/
+data/*
+!data/testpart0.obj
+!data/testpart1.obj

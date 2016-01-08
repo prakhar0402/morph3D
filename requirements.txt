@@ -1,0 +1,11 @@
+jupyter
+numpy
+distribute
+traits
+traitsui
+mayavi
+pyfftw3
+matplotlib
+--allow-external fftw3f
+--allow-external fftw3f.lib
+--allow-external fftw3f.planning

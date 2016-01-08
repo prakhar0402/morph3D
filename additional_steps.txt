@@ -1,0 +1,20 @@
+VTK for mayavi:
+ -    install python-vtk from repositories systemwide
+ -    copy vtk folder from /usr/lib/pymodules/python2.7 to /PATH/TO/YOUR/VIRTUALENV/lib/python2.7/site-packages
+
+Download and install SIP and PyQt4 ( from https://www.riverbankcomputing.com/software/pyqt/download or using apt-get)
+
+	Install SIP using following commands:
+	cd $BUILD/SIP
+	python configure.py
+	make
+	[sudo] make install
+
+	Install PyQt using following commands (you might have to install libqt4-dev before):
+	cd $BUILD/PyQt
+	python configure.py
+	make
+	[sudo] make install
+
+	./pyqtvenv.sh
+
