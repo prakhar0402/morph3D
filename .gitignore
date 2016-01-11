@@ -63,3 +63,4 @@ venv/
 data/*
 !data/testpart0.obj
 !data/testpart1.obj
+testQt.*
