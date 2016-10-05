@@ -40,6 +40,7 @@ from mayavi.core.ui.api import MayaviScene, MlabSceneModel, \
 from PyQt4 import QtGui, QtCore
 import numpy as np
 from numpy import *
+from scipy.ndimage.interpolation import shift
 
 from shape import Shape         
 
@@ -55,13 +56,13 @@ class Visualization(HasTraits):
         '''
         self.scene.mlab.clf()
         alpha.display(self.scene.mlab, contours = [1],
-                        color = (1, 0, 0), opacity = 0.5)
+                        color = (1, 1, 0), opacity = 0.3)
         beta.display(self.scene.mlab, contours = [1],
                         color = (0, 0, 1), opacity = 0.5)
-        msum.display(self.scene.mlab, contours = [1],
-                        color = (1, 1, 0), opacity = 0.3)
-        mdiff.display(self.scene.mlab, contours = [1],
+        as_man.display(self.scene.mlab, contours = [1],
                         color = (0, 1, 0), opacity = 0.3)
+        non_man.display(self.scene.mlab, contours = [1],
+                        color = (1, 0, 0), opacity = 0.5)
 
     view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
                 height=600, width=800, show_label=False), resizable=True)
@@ -225,34 +226,31 @@ class Window(QtGui.QMainWindow):
         self.vis_label.resize(self.vis_label.minimumSizeHint())
         self.right_grid.addWidget(self.vis_label, 2, 0)
         
-        
-        #TODO: use the right operator symbols to display on GUI window
-        
         # checkboxes for setting visibility for each of the four shapes
         self.partA_cb = QtGui.QCheckBox("Part A", self.container)
         self.partB_cb = QtGui.QCheckBox("Part B", self.container)
-        self.msum_cb = QtGui.QCheckBox(u"A \u2295 B", self.container) #U\+2296
-        self.mdiff_cb = QtGui.QCheckBox(u"A \u2296 B", self.container) #U+2297
+        self.as_man_cb = QtGui.QCheckBox("AsMan", self.container) #U\+2296
+        self.non_man_cb = QtGui.QCheckBox("NonMan", self.container) #U+2297
         
-        self.partA_cb.setStyleSheet("background-color: gray; color: red")
+        self.partA_cb.setStyleSheet("background-color: gray; color: yellow")
         self.partB_cb.setStyleSheet("background-color: gray; color: blue")
-        self.msum_cb.setStyleSheet("background-color: gray; color: yellow")
-        self.mdiff_cb.setStyleSheet("background-color: gray; color: green")
+        self.as_man_cb.setStyleSheet("background-color: gray; color: green")
+        self.non_man_cb.setStyleSheet("background-color: gray; color: red")
         
         self.partA_cb.toggle()
         self.partB_cb.toggle()
-        self.msum_cb.toggle()
-        self.mdiff_cb.toggle()
+        self.as_man_cb.toggle()
+        self.non_man_cb.toggle()
         
         self.partA_cb.stateChanged.connect(self.partA_vis)
         self.partB_cb.stateChanged.connect(self.partB_vis)
-        self.msum_cb.stateChanged.connect(self.msum_vis)
-        self.mdiff_cb.stateChanged.connect(self.mdiff_vis)
+        self.as_man_cb.stateChanged.connect(self.as_man_vis)
+        self.non_man_cb.stateChanged.connect(self.non_man_vis)
         
         self.vis_grid.addWidget(self.partA_cb)
         self.vis_grid.addWidget(self.partB_cb)
-        self.vis_grid.addWidget(self.msum_cb)
-        self.vis_grid.addWidget(self.mdiff_cb)
+        self.vis_grid.addWidget(self.as_man_cb)
+        self.vis_grid.addWidget(self.non_man_cb)
         
         # adding visibility subsubgrid inside right subgrid
         self.right_grid.addLayout(self.vis_grid, 3, 0)
@@ -266,16 +264,16 @@ class Window(QtGui.QMainWindow):
         self.right_grid.addWidget(self.save_label, 4, 0)
         
         # pushbotton to save the computed minkowski sum as binvox file
-        self.save_msum = QtGui.QPushButton(u"A \u2295 B", self.container)
-        self.save_msum.clicked.connect(self.save_sum)
-        self.save_msum.resize(self.save_msum.sizeHint())
-        self.save_grid.addWidget(self.save_msum)
+        self.save_as_man = QtGui.QPushButton("AsMan", self.container)
+        self.save_as_man.clicked.connect(self.save_as_man_cb)
+        self.save_as_man.resize(self.save_as_man.sizeHint())
+        self.save_grid.addWidget(self.save_as_man)
         
         # pushbutton to save the computed minkowski difference as binvox file
-        self.save_mdiff = QtGui.QPushButton(u"A \u2296 B", self.container)
-        self.save_mdiff.clicked.connect(self.save_diff)
-        self.save_mdiff.resize(self.save_mdiff.sizeHint())
-        self.save_grid.addWidget(self.save_mdiff)
+        self.save_non_man = QtGui.QPushButton("NonMan", self.container)
+        self.save_non_man.clicked.connect(self.save_non_man_cb)
+        self.save_non_man.resize(self.save_non_man.sizeHint())
+        self.save_grid.addWidget(self.save_non_man)
         
         # adding save subsubgrid inside right subgrid
         self.right_grid.addLayout(self.save_grid, 5, 0)
@@ -367,41 +365,41 @@ class Window(QtGui.QMainWindow):
         beta.toggle_visibility()
         self.update()
         
-    def msum_vis(self):
+    def as_man_vis(self):
         '''
-        Checkbox 'msum_cb' callback function
-        Toggles the visibility of shape 'msum'
+        Checkbox 'as_man_cb' callback function
+        Toggles the visibility of shape 'as_man'
         '''
-        global msum
-        msum.toggle_visibility()
+        global as_man
+        as_man.toggle_visibility()
         self.update()
         
-    def mdiff_vis(self):
+    def non_man_vis(self):
         '''
-        Checkbox 'mdiff_cb' callback function
-        Toggles the visibility of shape 'mdiff'
+        Checkbox 'non_man_cb' callback function
+        Toggles the visibility of shape 'non_man'
         '''
-        global mdiff
-        mdiff.toggle_visibility()
+        global non_man
+        non_man.toggle_visibility()
         self.update()
         
-    def save_sum(self):
+    def save_as_man_cb(self):
         '''
-        Pushbutton 'save_msum' callback function
-        Prompts the user to save shape 'msum' as binvox file
+        Pushbutton 'save_as_man' callback function
+        Prompts the user to save shape 'as_man' as binvox file
         '''
-        global msum
+        global as_man
         name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
-        msum.write_voxel(name)
+        as_man.write_voxel(name)
         
-    def save_diff(self):
+    def save_non_man_cb(self):
         '''
-        Pushbutton 'save_mdiff' callback function
-        Prompts the user to save shape 'mdiff' as binvox file
+        Pushbutton 'save_non_man' callback function
+        Prompts the user to save shape 'non_man' as binvox file
         '''
-        global mdiff
+        global non_man
         name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
-        mdiff.write_voxel(name)
+        non_man.write_voxel(name)
         
     def compute(self):
         '''
@@ -429,14 +427,14 @@ class Window(QtGui.QMainWindow):
     def resetAll(self):
         '''
         Resets the pushbutton 'morph' to enabled state and reinitializes the
-        shapes msum and mdiff
+        shapes as_man and non_man
         '''
-        global msum, mdiff
+        global as_man, non_man
         self.reset()
-        msum = Shape()
-        mdiff = Shape()
-        msum.set_visibility(self.msum_cb.isChecked())
-        mdiff.set_visibility(self.mdiff_cb.isChecked())
+        as_man = Shape()
+        non_man = Shape()
+        as_man.set_visibility(self.as_man_cb.isChecked())
+        non_man.set_visibility(self.non_man_cb.isChecked())
         self.update()
 
 ################################################################################
@@ -462,56 +460,19 @@ def get_norm_corr(alpha, beta):
     corr.normalize()
 
     return corr
-
-def minkowski_sum(alpha, beta):
+    
+def minkowski_as_man(alpha, beta):
     '''
-    Computes minkowski sum using convolution algebra
+    Computes as manufactured model using convolution algebra
     Input: 'alpha' and 'beta' - Instances of class 'Shape()'
-    Output stored in global variables 'msum'
+    Output stored in global variables 'as_man'
     '''
-    global msum
+    global as_man, non_man
     
-    # getting the convolution of two shapes
-    corr = get_norm_corr(alpha, beta)
+    erosion_alpha_by_beta = Shape()
+    ref_beta = Shape()
     
-    # minkowski sum would set of all cells with positive value
-    # hence, using a small number of (0.01% of volume of shape 'beta')
-    # to mitigate the precision error
-    level = 0.0001*(beta.get_volume()-0.5)
-    
-    # computing minkowski sum as sublevel set of convolution
-    msum.set_voxel(corr.get_sublevel_set(level))
-
-def minkowski_diff(alpha, beta):
-    '''
-    Computes minkowski difference using convolution algebra
-    Input: 'alpha' and 'beta' - Instances of class 'Shape()'
-    Output stored in global variables 'mdiff'
-    '''
-    global mdiff
-    
-    # getting the convolution of two shapes
-    corr = get_norm_corr(alpha, beta)
-    
-    # minkowski difference would set of all cells with value larger than
-    # volume of 'beta'
-    # using a number slightly smaller than the volume of shape 'beta'
-    # to mitigate the precision error
-    level = 1*(beta.get_volume()-0.5)
-    
-    # computing minkowski sum as sublevel set of convolution
-    mdiff.set_voxel(corr.get_sublevel_set(level))
-    
-def minkowski_sum_and_diff(alpha, beta):
-    '''
-    Computes minkowski sum and difference using convolution algebra
-    Input: 'alpha' and 'beta' - Instances of class 'Shape()'
-    Output stored in global variables 'msum' and 'mdiff'
-    '''
-    global msum, mdiff
-    
-    # getting the convolution of two shapes
-    corr = get_norm_corr(alpha, beta)
+    ref_beta.set_voxel(beta.get_voxel()[::-1, ::-1, ::-1])
     
     # minkowski sum would set of all cells with positive value
     # hence, using a small number of (0.01% of volume of shape 'beta')
@@ -524,19 +485,30 @@ def minkowski_sum_and_diff(alpha, beta):
     # to mitigate the precision error
     level_diff = 1*(beta.get_volume()-0.5)
     
-    # computing minkowski sum and difference as sublevel sets of convolution
-    msum.set_voxel(corr.get_sublevel_set(level_sum))
-    mdiff.set_voxel(corr.get_sublevel_set(level_diff))
+    # getting the convolution of two shapes
+    corr = get_norm_corr(alpha, ref_beta)
+    
+    # computing minkowski difference as sublevel sets of convolution
+    erosion_alpha_by_beta.set_voxel(corr.get_sublevel_set(level_diff))
+    
+    # getting the convolution of erosion by beta
+    corr2 = get_norm_corr(erosion_alpha_by_beta, beta)
+    
+    # computing minkowski difference as sublevel sets of convolution
+    as_man.set_voxel(shift(corr2.get_sublevel_set(level_sum), shift=(1, 1, 1), mode='wrap'))
+    
+    # computing non-manufacturable portion
+    non_man.set_voxel(1*(logical_and(alpha.get_voxel() == 1, as_man.get_voxel() != 1)))
 
 def compute():
     '''
     Computes the minkowski sum and difference.
-    Global variables msum and mdiff are used to store the result.
+    Global variables as_man and non_man are used to store the result.
     The operations are performed on shapes stored in global variables 'alpha'
     and 'beta'.
-    'alpha', 'beta', 'msum', and 'mdiff' are all objects of class 'Shape()'.
+    'alpha', 'beta', 'as_man', and 'non_man' are all objects of class 'Shape()'.
     '''
-    global alpha, beta, msum, mdiff
+    global alpha, beta, as_man, non_man, as_man, non_man
     
     alpha.read_voxel()
     beta.read_voxel()
@@ -552,8 +524,8 @@ def compute():
         alpha.pad_voxel(dims)
         beta.pad_voxel(dims)
         
-        # Computing the minkowski sum and difference
-        minkowski_sum_and_diff(alpha, beta)
+        # Computing the as manufactured model
+        minkowski_as_man(alpha, beta)
 
 ################################################################################
 
@@ -562,8 +534,8 @@ if __name__ == "__main__":
     # Initializing shapes
     alpha = Shape()
     beta = Shape()
-    msum = Shape()
-    mdiff = Shape()
+    as_man = Shape()
+    non_man = Shape()
     
     beta.set_scale(0.3)
     
