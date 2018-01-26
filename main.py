@@ -225,9 +225,6 @@ class Window(QtGui.QMainWindow):
         self.vis_label.resize(self.vis_label.minimumSizeHint())
         self.right_grid.addWidget(self.vis_label, 2, 0)
         
-        
-        #TODO: use the right operator symbols to display on GUI window
-        
         # checkboxes for setting visibility for each of the four shapes
         self.partA_cb = QtGui.QCheckBox("Part A", self.container)
         self.partB_cb = QtGui.QCheckBox("Part B", self.container)
