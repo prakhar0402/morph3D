@@ -1,5 +1,5 @@
-#    DART Lab, University at Buffalo
-#    Copyright (C) 2016  Prakhar Jaiswal <prakharj@buffalo.edu>
+#    MAD Lab, University at Buffalo
+#    Copyright (C) 2018  Prakhar Jaiswal <prakharj@buffalo.edu>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
